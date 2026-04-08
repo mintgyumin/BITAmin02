@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wine Classification Dashboard</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: rgba(255, 252, 247, 0.84);
+      --panel-strong: #fffaf2;
+      --text: #1f2937;
+      --muted: #5b6470;
+      --line: rgba(91, 100, 112, 0.18);
+      --accent: #c46a2b;
+      --accent-soft: #f4d2b8;
+      --accent-deep: #7d3f16;
+      --teal: #2c7a7b;
+      --olive: #73844c;
+      --rose: #b85c5c;
+      --shadow: 0 24px 60px rgba(76, 53, 31, 0.12);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(244, 210, 184, 0.9), transparent 28%),
+        radial-gradient(circle at top right, rgba(115, 132, 76, 0.15), transparent 25%),
+        linear-gradient(180deg, #f8f3eb 0%, #f1ece2 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 32px auto 48px;
+    }
+
+    .hero,
+    .card {
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 36px;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -120px -120px auto;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(196, 106, 43, 0.16) 0%, rgba(196, 106, 43, 0) 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin-top: 14px;
+      max-width: 640px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      align-content: start;
+    }
+
+    .mini-stat {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+    }
+
+    .mini-stat span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .mini-stat strong {
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      padding: 24px;
+    }
+
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .card-title h2 {
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      margin-bottom: 8px;
+    }
+
+    .stat-caption,
+    .note,
+    li {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .kv {
+      display: grid;
+      gap: 12px;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kv-row:last-child {
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .kv-row strong {
+      font-size: 18px;
+    }
+
+    .feature-box {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .feature-list {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      background: #f7efe3;
+      color: #6a4d35;
+      border: 1px solid rgba(125, 63, 22, 0.1);
+    }
+
+    .split-bar {
+      margin-top: 16px;
+      height: 14px;
+      border-radius: 999px;
+      background: #ece5db;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .split-train {
+      background: linear-gradient(90deg, var(--teal), #4fa4a5);
+    }
+
+    .split-test {
+      background: linear-gradient(90deg, var(--accent), #e39d63);
+    }
+
+    .split-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .score-chip {
+      display: inline-block;
+      min-width: 62px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(44, 122, 123, 0.12);
+      color: var(--teal);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    svg {
+      width: 100%;
+      display: block;
+    }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(56px, 1fr));
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .matrix-cell,
+    .matrix-label {
+      min-height: 72px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .matrix-label {
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--muted);
+      font-size: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .matrix-cell {
+      flex-direction: column;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .matrix-cell span {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.88;
+      margin-top: 4px;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin: 0;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .span-3,
+      .span-4,
+      .span-5,
+      .span-6,
+      .span-7,
+      .span-8 {
+        grid-column: span 12;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100% - 20px, 1180px);
+        margin: 20px auto 28px;
+      }
+
+      .hero,
+      .card {
+        padding: 20px;
+        border-radius: 20px;
+      }
+
+      .hero-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .matrix {
+        grid-template-columns: repeat(4, minmax(44px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">ML Performance Dashboard</div>
+        <h1>Wine 분류 모델 발표 대시보드</h1>
+        <p id="hero-summary"></p>
+      </div>
+      <div class="hero-metrics">
+        <div class="mini-stat">
+          <span>교차검증 평균 정확도</span>
+          <strong id="hero-cv"></strong>
+        </div>
+        <div class="mini-stat">
+          <span>테스트 정확도</span>
+          <strong id="hero-test"></strong>
+        </div>
+        <div class="mini-stat">
+          <span>전체 샘플 수</span>
+          <strong id="hero-samples"></strong>
+        </div>
+        <div class="mini-stat">
+          <span>특성 수</span>
+          <strong id="hero-features"></strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card span-5">
+        <div class="card-title">
+          <h2>모델 개요</h2>
+          <span class="badge" id="dataset-badge"></span>
+        </div>
+        <div class="kv" id="overview-kv"></div>
+        <div class="feature-box">
+          <strong>입력 feature</strong>
+          <div class="feature-list" id="feature-list"></div>
+        </div>
+      </article>
+
+      <article class="card span-3">
+        <div class="card-title">
+          <h2>데이터 분할</h2>
+          <span class="badge">Stratified</span>
+        </div>
+        <div class="stat-value" id="split-ratio"></div>
+        <p class="stat-caption">학습용과 테스트용 데이터를 계층적 분할로 나눠 클래스 비율을 유지했다.</p>
+        <div class="split-bar">
+          <div class="split-train" id="split-train-bar"></div>
+          <div class="split-test" id="split-test-bar"></div>
+        </div>
+        <div class="split-labels">
+          <span id="train-label"></span>
+          <span id="test-label"></span>
+        </div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-title">
+          <h2>교차검증 해석</h2>
+          <span class="badge">Repeated 5x5</span>
+        </div>
+        <div class="stat-value" id="cv-value"></div>
+        <p class="stat-caption" id="cv-note"></p>
+        <div class="footer-note" id="cv-footnote"></div>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-title">
+          <h2>테스트 성능</h2>
+          <span class="badge">Hold-out</span>
+        </div>
+        <div class="stat-value" id="test-value"></div>
+        <p class="stat-caption" id="test-note"></p>
+        <div class="footer-note" id="generalization-note"></div>
+      </article>
+
+      <article class="card span-8">
+        <div class="card-title">
+          <h2>클래스별 Precision / Recall / F1</h2>
+          <span class="badge">Test Report</span>
+        </div>
+        <div class="legend">
+          <span><i class="dot" style="background:#2c7a7b"></i>Precision</span>
+          <span><i class="dot" style="background:#c46a2b"></i>Recall</span>
+          <span><i class="dot" style="background:#73844c"></i>F1-score</span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="bar-chart" viewBox="0 0 820 340" role="img" aria-label="클래스별 성능 비교 차트"></svg>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-score</th>
+              <th>Support</th>
+            </tr>
+          </thead>
+          <tbody id="report-body"></tbody>
+        </table>
+      </article>
+
+      <article class="card span-4">
+        <div class="card-title">
+          <h2>Confusion Matrix</h2>
+          <span class="badge">Test Set</span>
+        </div>
+        <div class="matrix" id="matrix"></div>
+        <div class="footer-note">행은 실제 클래스, 열은 예측 클래스다. 대각선 값이 높을수록 안정적으로 분류한 것이다.</div>
+      </article>
+
+      <article class="card span-6">
+        <div class="card-title">
+          <h2>성능 해석</h2>
+          <span class="badge">Narrative</span>
+        </div>
+        <ul id="insights"></ul>
+      </article>
+
+      <article class="card span-6">
+        <div class="card-title">
+          <h2>결론 및 개선 방향</h2>
+          <span class="badge">Actionable</span>
+        </div>
+        <ul id="recommendations"></ul>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    const results = {
+      "dataset": "Wine",
+      "model_name": "LogisticRegression + StandardScaler",
+      "random_state": 42,
+      "n_samples_total": 178,
+      "n_features": 13,
+      "feature_names": [
+        "alcohol",
+        "malic_acid",
+        "ash",
+        "alcalinity_of_ash",
+        "magnesium",
+        "total_phenols",
+        "flavanoids",
+        "nonflavanoid_phenols",
+        "proanthocyanins",
+        "color_intensity",
+        "hue",
+        "od280/od315_of_diluted_wines",
+        "proline"
+      ],
+      "class_names": ["class_0", "class_1", "class_2"],
+      "train_size": 142,
+      "test_size": 36,
+      "cross_validation": {
+        "strategy": "RepeatedStratifiedKFold",
+        "n_splits": 5,
+        "n_repeats": 5,
+        "scoring": "accuracy",
+        "mean_accuracy": 0.9817241379310346,
+        "std_accuracy": 0.022332934863472452
+      },
+      "oof_evaluation": {
+        "classification_report": {
+          "accuracy": 0.9788732394366197
+        }
+      },
+      "test_evaluation": {
+        "accuracy": 0.9722222222222222,
+        "classification_report": {
+          "class_0": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 12.0
+          },
+          "class_1": {
+            "precision": 0.9333333333333333,
+            "recall": 1.0,
+            "f1-score": 0.9655172413793104,
+            "support": 14.0
+          },
+          "class_2": {
+            "precision": 1.0,
+            "recall": 0.9,
+            "f1-score": 0.9473684210526315,
+            "support": 10.0
+          },
+          "macro avg": {
+            "precision": 0.9777777777777779,
+            "recall": 0.9666666666666667,
+            "f1-score": 0.9709618874773139,
+            "support": 36.0
+          },
+          "weighted avg": {
+            "precision": 0.974074074074074,
+            "recall": 0.9722222222222222,
+            "f1-score": 0.9719701552732407,
+            "support": 36.0
+          }
+        },
+        "confusion_matrix": [
+          [12, 0, 0],
+          [0, 14, 0],
+          [0, 1, 9]
+        ]
+      }
+    };
+
+    const formatPct = (value) => `${(value * 100).toFixed(2)}%`;
+    const formatDelta = (value) => `${value >= 0 ? "+" : ""}${(value * 100).toFixed(2)}%p`;
+
+    const cv = results.cross_validation.mean_accuracy;
+    const cvStd = results.cross_validation.std_accuracy;
+    const testAccuracy = results.test_evaluation.accuracy;
+    const oofAccuracy = results.oof_evaluation.classification_report.accuracy;
+    const generalizationGap = testAccuracy - cv;
+    const trainRatio = results.train_size / results.n_samples_total;
+    const testRatio = results.test_size / results.n_samples_total;
+
+    document.getElementById("hero-summary").textContent =
+      `${results.dataset} 데이터셋 ${results.n_samples_total}개 샘플과 ${results.n_features}개 feature를 바탕으로 ` +
+      `${results.model_name} 파이프라인을 평가했다. 교차검증과 테스트 성능이 모두 높아 발표용으로 설명하기 좋은 안정적인 분류 결과를 보여준다.`;
+    document.getElementById("hero-cv").textContent = formatPct(cv);
+    document.getElementById("hero-test").textContent = formatPct(testAccuracy);
+    document.getElementById("hero-samples").textContent = results.n_samples_total.toString();
+    document.getElementById("hero-features").textContent = results.n_features.toString();
+
+    document.getElementById("dataset-badge").textContent = results.dataset;
+    const overview = [
+      ["모델", results.model_name],
+      ["데이터셋", results.dataset],
+      ["전체 샘플 수", `${results.n_samples_total}개`],
+      ["특성 수", `${results.n_features}개`]
+    ];
+    const overviewContainer = document.getElementById("overview-kv");
+    overview.forEach(([label, value]) => {
+      const row = document.createElement("div");
+      row.className = "kv-row";
+      row.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      overviewContainer.appendChild(row);
+    });
+
+    const featureList = document.getElementById("feature-list");
+    results.feature_names.forEach((feature) => {
+      const pill = document.createElement("span");
+      pill.className = "pill";
+      pill.textContent = feature;
+      featureList.appendChild(pill);
+    });
+
+    document.getElementById("split-ratio").textContent = `${Math.round(trainRatio * 100)} : ${Math.round(testRatio * 100)}`;
+    document.getElementById("split-train-bar").style.width = `${trainRatio * 100}%`;
+    document.getElementById("split-test-bar").style.width = `${testRatio * 100}%`;
+    document.getElementById("train-label").textContent = `Train ${results.train_size} (${(trainRatio * 100).toFixed(1)}%)`;
+    document.getElementById("test-label").textContent = `Test ${results.test_size} (${(testRatio * 100).toFixed(1)}%)`;
+
+    document.getElementById("cv-value").textContent = `${formatPct(cv)} ± ${(cvStd * 100).toFixed(2)}%p`;
+    document.getElementById("cv-note").textContent =
+      `반복 계층 교차검증 기준 평균 정확도는 ${formatPct(cv)}이고 표준편차는 ${(cvStd * 100).toFixed(2)}%p다. 분산이 크지 않아 fold가 바뀌어도 성능 변동은 제한적이다.`;
+    document.getElementById("cv-footnote").textContent =
+      `OOF 정확도 ${formatPct(oofAccuracy)}도 비슷한 수준이라, 훈련 데이터 내부에서의 재현성이 양호하다고 볼 수 있다.`;
+
+    document.getElementById("test-value").textContent = formatPct(testAccuracy);
+    document.getElementById("test-note").textContent =
+      `홀드아웃 테스트에서도 높은 정확도를 유지했다. class_2에서 1건의 오분류만 발생해 전체적인 일반화 성능은 우수하다.`;
+    document.getElementById("generalization-note").textContent =
+      `교차검증 대비 테스트 성능 차이는 ${formatDelta(generalizationGap)}로 작다. 과적합 신호는 크지 않지만, 데이터 규모가 작아 완전히 배제할 정도는 아니다.`;
+
+    const reportBody = document.getElementById("report-body");
+    const classRows = results.class_names.map((className) => ({
+      name: className,
+      ...results.test_evaluation.classification_report[className]
+    }));
+
+    classRows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${row.name}</strong></td>
+        <td><span class="score-chip">${row.precision.toFixed(3)}</span></td>
+        <td><span class="score-chip">${row.recall.toFixed(3)}</span></td>
+        <td><span class="score-chip">${row["f1-score"].toFixed(3)}</span></td>
+        <td>${row.support.toFixed(0)}</td>
+      `;
+      reportBody.appendChild(tr);
+    });
+
+    const svg = document.getElementById("bar-chart");
+    const ns = "http://www.w3.org/2000/svg";
+    const chartData = classRows.map((row) => ({
+      label: row.name,
+      values: [
+        { key: "Precision", value: row.precision, color: "#2c7a7b" },
+        { key: "Recall", value: row.recall, color: "#c46a2b" },
+        { key: "F1", value: row["f1-score"], color: "#73844c" }
+      ]
+    }));
+
+    const chart = { x: 70, y: 20, width: 690, height: 250 };
+    const axisColor = "#7d8693";
+    const groupWidth = chart.width / chartData.length;
+    const barWidth = 42;
+    const gap = 10;
+
+    for (let tick = 0; tick <= 5; tick += 1) {
+      const value = tick / 5;
+      const y = chart.y + chart.height - (value * chart.height);
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", chart.x);
+      line.setAttribute("x2", chart.x + chart.width);
+      line.setAttribute("y1", y);
+      line.setAttribute("y2", y);
+      line.setAttribute("stroke", tick === 0 ? axisColor : "#ddd4c7");
+      line.setAttribute("stroke-width", tick === 0 ? "1.5" : "1");
+      svg.appendChild(line);
+
+      const text = document.createElementNS(ns, "text");
+      text.setAttribute("x", chart.x - 14);
+      text.setAttribute("y", y + 4);
+      text.setAttribute("text-anchor", "end");
+      text.setAttribute("fill", axisColor);
+      text.setAttribute("font-size", "12");
+      text.textContent = value.toFixed(1);
+      svg.appendChild(text);
+    }
+
+    chartData.forEach((group, groupIndex) => {
+      const groupStart = chart.x + (groupIndex * groupWidth) + ((groupWidth - ((barWidth * 3) + (gap * 2))) / 2);
+      group.values.forEach((entry, entryIndex) => {
+        const height = entry.value * chart.height;
+        const x = groupStart + (entryIndex * (barWidth + gap));
+        const y = chart.y + chart.height - height;
+
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", x);
+        rect.setAttribute("y", y);
+        rect.setAttribute("width", barWidth);
+        rect.setAttribute("height", height);
+        rect.setAttribute("rx", "12");
+        rect.setAttribute("fill", entry.color);
+        svg.appendChild(rect);
+
+        const value = document.createElementNS(ns, "text");
+        value.setAttribute("x", x + (barWidth / 2));
+        value.setAttribute("y", y - 8);
+        value.setAttribute("text-anchor", "middle");
+        value.setAttribute("fill", "#4b5563");
+        value.setAttribute("font-size", "12");
+        value.textContent = entry.value.toFixed(3);
+        svg.appendChild(value);
+      });
+
+      const label = document.createElementNS(ns, "text");
+      label.setAttribute("x", chart.x + (groupIndex * groupWidth) + (groupWidth / 2));
+      label.setAttribute("y", chart.y + chart.height + 30);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("fill", "#4b5563");
+      label.setAttribute("font-size", "13");
+      label.textContent = group.label;
+      svg.appendChild(label);
+    });
+
+    const matrix = document.getElementById("matrix");
+    const matrixData = results.test_evaluation.confusion_matrix;
+    const maxCell = Math.max(...matrixData.flat());
+    const matrixLabels = ["Actual / Pred", ...results.class_names];
+    matrixLabels.forEach((label) => {
+      const cell = document.createElement("div");
+      cell.className = "matrix-label";
+      cell.textContent = label;
+      matrix.appendChild(cell);
+    });
+
+    matrixData.forEach((row, rowIndex) => {
+      const rowLabel = document.createElement("div");
+      rowLabel.className = "matrix-label";
+      rowLabel.textContent = results.class_names[rowIndex];
+      matrix.appendChild(rowLabel);
+
+      row.forEach((value, colIndex) => {
+        const intensity = 0.18 + (value / maxCell) * 0.82;
+        const cell = document.createElement("div");
+        cell.className = "matrix-cell";
+        cell.style.background = `rgba(125, 63, 22, ${intensity.toFixed(3)})`;
+        cell.innerHTML = `${value}<span>${results.class_names[colIndex]}</span>`;
+        matrix.appendChild(cell);
+      });
+    });
+
+    const insights = [
+      `교차검증 평균 정확도 ${formatPct(cv)}와 테스트 정확도 ${formatPct(testAccuracy)}가 모두 높아 기본 성능 자체는 매우 우수하다.`,
+      `테스트 성능이 교차검증 평균보다 ${(Math.abs(generalizationGap) * 100).toFixed(2)}%p 낮지만 차이가 작아서 일반화 성능은 안정적이다.`,
+      `표준편차 ${(cvStd * 100).toFixed(2)}%p는 반복 평가에서 변동성이 크지 않다는 뜻이므로 현재 결과에 대한 신뢰도는 높은 편이다.`,
+      `다만 전체 샘플 수가 178개로 작기 때문에 점수는 높아도 데이터 규모 관점에서의 과적합 가능성은 계속 점검할 필요가 있다.`,
+      `class_2의 recall이 0.900으로 상대적으로 가장 낮아, 실제 class_2를 다른 클래스로 놓치는 경우가 일부 존재한다.`
+    ];
+
+    const recommendations = [
+      `더 많은 와인 샘플을 확보해 클래스별 분포를 넓히면 성능 추정의 분산을 더 줄일 수 있다.`,
+      `SVM, RandomForest, Gradient Boosting 같은 다른 모델과 비교해 현재 로지스틱 회귀가 최선인지 검증할 가치가 있다.`,
+      `하이퍼파라미터 탐색과 feature importance 분석을 추가하면 발표 시 모델 선택 근거를 더 설득력 있게 만들 수 있다.`,
+      `현재 결과는 발표용 데모로 충분히 신뢰할 수 있지만, 실제 운영 환경을 가정한다면 외부 검증 데이터셋으로 재확인이 필요하다.`
+    ];
+
+    const appendList = (id, items) => {
+      const container = document.getElementById(id);
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        container.appendChild(li);
+      });
+    };
+
+    appendList("insights", insights);
+    appendList("recommendations", recommendations);
+  </script>
+</body>
+</html>
